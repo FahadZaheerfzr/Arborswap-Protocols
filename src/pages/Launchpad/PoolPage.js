@@ -75,6 +75,7 @@ export default function PoolPage() {
               to_symbol={pool.sale.token.tokenSymbol}
               token={pool.sale.token}
               sale={pool.sale}
+              objId={pool._id}
               account={userAccount}
             />
           </div>

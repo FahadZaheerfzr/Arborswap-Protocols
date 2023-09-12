@@ -229,6 +229,7 @@ export default function AdminPanel({
       whiteListedAddresses: sale.whiteListedAddresses,
       owner: sale.owner,
       isFinished: sale.isFinished,
+      chainID: sale.chainID,
     }      
     try {
       const res = await axios.put(`${BACKEND_URL}/api/sale/${objId}`, {

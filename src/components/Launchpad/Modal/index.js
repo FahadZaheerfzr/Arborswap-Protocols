@@ -25,6 +25,7 @@ import "react-toastify/dist/ReactToastify.css";
 import getAmountParticipated from "utils/getAmountParticipated";
 import Web3 from "web3";
 import { useModal } from "react-simple-modal-provider";
+import { BACKEND_URL } from "config/constants/LaunchpadAddress";
 
 export default function Modal({
   showModal,
@@ -33,6 +34,7 @@ export default function Modal({
   to_icon,
   to_symbol,
   sale,
+  objId,
   // account,
 }) {
   const { library } = useEthers();
@@ -41,9 +43,9 @@ export default function Modal({
   const [usdAmount, setUsdAmount] = useState(sale.minAllocation * bnbUSD);
   const [tokenPrice, setTokenPrice] = useState(parseFloat(sale.presalePrice));
   const { open: openLoadingModal, close: closeLoadingModal } =
-  useModal("LoadingModal");
+    useModal("LoadingModal");
   // const sale_info_public_erc = usePublicErcSaleInfo(sale.saleAddress);
-  console.log(sale,"saleis")
+  console.log(sale, "saleis");
   let account = "";
   const [balanceBNB, setBalanceBNB] = useState(null);
   const [balance, setBalance] = useState(0);
@@ -87,20 +89,20 @@ export default function Modal({
     console.log("currenct address", sale.currency.address);
     console.log(acct, "acct");
     if (sale.currency.symbol !== "BNB") {
-      console.log(sale.currency.address, "sale.currency.address")
+      console.log(sale.currency.address, "sale.currency.address");
       const contract = new Contract(
         sale.currency.address,
         ERC20,
         library.getSigner()
       );
       const getBalance = async () => {
-        try{
-          if(!acct) return;
-        const balance = await contract.balanceOf(acct);
-        const balanceString = (formatBigToNum(balance, 18));
-        setBalance(parseFloat(balanceString.replace(/,/g, '')))
-        }catch(e){
-          console.log(e)
+        try {
+          if (!acct) return;
+          const balance = await contract.balanceOf(acct);
+          const balanceString = formatBigToNum(balance, 18);
+          setBalance(parseFloat(balanceString.replace(/,/g, "")));
+        } catch (e) {
+          console.log(e);
         }
       };
       getBalance();
@@ -210,12 +212,17 @@ export default function Modal({
   const handleSubmit = async () => {
     //user balanceBNB
     //check if sale started
-    bought = await getAmountParticipated(sale.saleAddress,acct,sale.saleType);
-    console.log("bought", bought)
+    bought = await getAmountParticipated(sale.saleAddress, acct, sale.saleType);
+    console.log("bought", bought);
     const userAllocation = formatBigToNum(bought[0].toString(), 19, 4);
 
     if (userAllocation >= sale.maxAllocation) {
-      console.log("userAllocation", userAllocation, "sale.maxAllocation", sale.maxAllocation)
+      console.log(
+        "userAllocation",
+        userAllocation,
+        "sale.maxAllocation",
+        sale.maxAllocation
+      );
       toast.error("You have reached the maximum allocation");
       return;
     }
@@ -260,7 +267,7 @@ export default function Modal({
     );
     // console.log("contract", contract);
     const amountBuy = parseEther(amount.toString()).toString();
-      openLoadingModal();
+    openLoadingModal();
     try {
       if (sale.currency.symbol !== "BNB") {
         const approvalContract = new Contract(
@@ -268,14 +275,14 @@ export default function Modal({
           ERC20,
           library.getSigner()
         );
-        try{
-        const approval = await approvalContract.approve(
-          sale.saleAddress,
-          ethers.constants.MaxUint256
-        );
-        await approval.wait();
-        }catch(err){
-          console.log(err)
+        try {
+          const approval = await approvalContract.approve(
+            sale.saleAddress,
+            ethers.constants.MaxUint256
+          );
+          await approval.wait();
+        } catch (err) {
+          console.log(err);
         }
       }
 
@@ -285,20 +292,80 @@ export default function Modal({
         });
         await tx.wait();
       } else {
-        console.log("acct", acct, amountBuy)
+        console.log("acct", acct, amountBuy);
         const tx = await contract.participate(amountBuy);
         await tx.wait();
       }
-      closeLoadingModal();
+      try {
+        const saleInfo = await getSaleInfo(
+          sale.saleAddress,
+          sale.type,
+          sale.currency.symbol
+        );
+        let res;
+        if (sale.saleType === "standard" || sale.currency.symbol === "BNB") {
+          res = await saleInfo.totalBNBRaised;
+        } else if (sale.saleType === "private") {
+          res = await saleInfo.totalERC20Raised;
+        }
+        res = BigNumber.from(res);
+        const percents = res.mul(100).div(saleInfo.hardCap);
+        const filled = formatBigToNum(percents.toString(), 0, 1);
+        console.log(res, "in get price");
+        console.log(filled, "filled");
+        const finalSaleObject = {
+          saleId: sale.saleId,
+          saleAddress: sale.saleAddress,
+          saleType: sale.type,
+          github: sale.github,
+          website: sale.website,
+          twitter: sale.twitter,
+          linkedin: sale.linkedin,
+          discord: sale.discord,
+          telegram: sale.telegram,
+          youtube: sale.youtube,
+          image: sale.image,
+          name: sale.name,
+          description: sale.description,
+          tags: sale.tags,
+          token: sale.token,
+          minAllocation: sale.minAllocation,
+          maxAllocation: sale.maxAllocation,
+          amountLiquidity: sale.amountLiquidity,
+          listing: sale.listing,
+          lockup: sale.lockup,
+          presalePrice: sale.presalePrice,
+          endDate: sale.endDate,
+          startDate: sale.startDate,
+          hardCap: sale.hardCap,
+          softCap: sale.softCap,
+          unsoldToken: sale.unsoldToken,
+          currency: sale.currency,
+          dex: sale.dex,
+          whiteisting: sale.whiteisting,
+          whiteListedAddresses: sale.whiteListedAddresses,
+          owner: sale.owner,
+          isFinished: sale.isFinished,
+          filledPercent: filled,
+          chainID: sale.chainID,
+        };
+        console.log(finalSaleObject, "finalSaleObject");
+        const res2 = await axios.put(`${BACKEND_URL}/api/sale/${objId}`, {
+          sale: finalSaleObject,
+        });
+        console.log(res2, "res2");
+      } catch (err) {
+        console.log(err);
+      }
+      // closeLoadingModal();
       toast.success("Transaction successful");
-      window.history.back();
+      // window.history.back();
       showModal(false);
     } catch (err) {
       toast.error("Transaction failed");
       console.log(err);
     }
     closeLoadingModal();
-
   };
 
   const handleInput = async (e) => {
@@ -314,7 +381,7 @@ export default function Modal({
       return;
     }
     //if balance is less than max allocation show error
-    console.log(parseFloat(balance), parseFloat(sale.maxAllocation))
+    console.log(parseFloat(balance), parseFloat(sale.maxAllocation));
     if (parseFloat(balance) < parseFloat(sale.maxAllocation)) {
       toast.error("Insufficient balance");
       return;
@@ -322,9 +389,9 @@ export default function Modal({
     let bal = balance;
     const amt = parseFloat(sale.maxAllocation);
     setAmount(amt);
-    console.log(amt)
+    console.log(amt);
     setUsdAmount((amt * bnbUSD).toFixed(3));
-    console.log(amt * tokenPrice)
+    console.log(amt * tokenPrice);
     setTokenAmount((amt * tokenPrice).toFixed(5));
   };
   const handleHalf = () => {
@@ -333,16 +400,16 @@ export default function Modal({
       return;
     }
     //if balance is less than max allocation show error
-    
-    if (parseFloat(balance) < (parseFloat(sale.maxAllocation)/2)) {
+
+    if (parseFloat(balance) < parseFloat(sale.maxAllocation) / 2) {
       toast.error("Insufficient balance");
       return;
     }
     let bal = balance;
     const amt = parseFloat(sale.maxAllocation);
     setAmount(amt / 2);
-    setUsdAmount((amt / 2 * bnbUSD).toFixed(3));
-    setTokenAmount((amt / 2 * tokenPrice).toFixed(5));
+    setUsdAmount(((amt / 2) * bnbUSD).toFixed(3));
+    setTokenAmount(((amt / 2) * tokenPrice).toFixed(5));
   };
 
   return (
