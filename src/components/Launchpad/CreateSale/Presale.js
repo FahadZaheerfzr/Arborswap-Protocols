@@ -156,7 +156,6 @@ export default function Presale({ setActive, saleType, setSaleObject, token }) {
     setWhiteListedAddresses(updatedAddresses);
   };
 
-
   // const handleDateChange = (newDate, index) => {
   //   const updatedDates = [...whiteListedDates];
   //   updatedDates[index] = newDate;
@@ -275,6 +274,7 @@ export default function Presale({ setActive, saleType, setSaleObject, token }) {
         listing === undefined
       ) {
         toast.error("Please fill all the fields");
+        closeLoadingModal()
         return;
       }
       if (currencySelected === 1) {
