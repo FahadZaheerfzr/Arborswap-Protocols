@@ -1,3 +1,3 @@
-#
+# Arborswap-Launchpad Frontend
 
-lp = 0x31da13310337464e44d63be7225d1cbd97254309
+This repo contains the code to Arborswap Launchpad Frontend
