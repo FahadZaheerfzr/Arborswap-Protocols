@@ -122,6 +122,7 @@ export default function Presale({ setActive, saleType, setSaleObject, token }) {
   const [amountLiquidity, setAmountLiquidity] = useState();
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
+  const [whitelistEndDate, setWhitelistEndDate] = useState();
   const [firstRelease, setFirstRelease] = useState();
   const [vestingPeriod, setVestingPeriod] = useState();
   const [vestingRelease, setVestingRelease] = useState();
@@ -320,6 +321,7 @@ export default function Presale({ setActive, saleType, setSaleObject, token }) {
       amountLiquidity: amountLiquidity,
       startDate: startDate,
       endDate: endDate,
+      whitelistEndDate: whitelistEndDate,
       unsoldToken: unsoldToken,
       lockup: lockup,
       owner: account,
@@ -566,15 +568,12 @@ export default function Presale({ setActive, saleType, setSaleObject, token }) {
                 placeholder="0xaEa574007c8ad33c7f4f7CF4a0d0B6F704ACD59e,..."
                 nothing={true}
               />
-              {/* <div className="mt-2">
+              <div className="mt-2">
                   <CalendarField
-                    heading={`Whitelist start date (UTC) for Address ${
-                      index + 1
-                    }`}
-                    setFunction={handleDateChange}
-                    index={index}
+                    heading={`Whitelist ends on (UTC)`}
+                    setFunction={setWhitelistEndDate}
                   />
-                </div> */}
+                </div>
             </div>
           </>
         )}

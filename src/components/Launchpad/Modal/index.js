@@ -299,7 +299,7 @@ export default function Modal({
       try {
         const saleInfo = await getSaleInfo(
           sale.saleAddress,
-          sale.type,
+          sale.saleType,
           sale.currency.symbol
         );
         let res;
@@ -311,12 +311,11 @@ export default function Modal({
         res = BigNumber.from(res);
         const percents = res.mul(100).div(saleInfo.hardCap);
         const filled = formatBigToNum(percents.toString(), 0, 1);
-        console.log(res, "in get price");
-        console.log(filled, "filled");
+
         const finalSaleObject = {
           saleId: sale.saleId,
           saleAddress: sale.saleAddress,
-          saleType: sale.type,
+          saleType: sale.saleType,
           github: sale.github,
           website: sale.website,
           twitter: sale.twitter,

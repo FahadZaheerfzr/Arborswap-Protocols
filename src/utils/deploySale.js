@@ -149,6 +149,7 @@ export const deployPublicSaleMainnet = async (
       github: saleData.github,
       website: saleData.website,
       twitter: saleData.twitter,
+      whitelistEndDate: saleObject.whitelistEndDate,
       chainID: chainId,
       linkedin: saleData.linkedin,
       discord: saleData.discord,
@@ -233,7 +234,8 @@ export const deployPublicSaleTestnet = async (
   const saleId = await contract.getNumberOfSalesDeployed();
 
   const routerAddress = ROUTER_ADDRESS;
-
+  console.log(saleObject)
+  console.log(saleData)
   console.log(routerAddress, "routerAddress");
   const adminAddress = ADMIN_ADDRESS;
   // 2nd - with uints [minParticipation, maxParticipation, lp%, dex listing rate,lpLockPeriod, saleEnd, saleStart, hardCap(tokens), softCap(bnb)]
@@ -302,7 +304,6 @@ export const deployPublicSaleTestnet = async (
     await tx.wait();
 
     deployedAddress = await contract.saleIdToAddress(saleId.toNumber());
-
     finalSaleObject = {
       saleId: saleId.toNumber(),
       saleAddress: deployedAddress,
@@ -314,6 +315,7 @@ export const deployPublicSaleTestnet = async (
       linkedin: saleData.linkedin,
       discord: saleData.discord,
       telegram: saleData.telegram,
+      whitelistEndDate: saleObject.whitelistEndDate,
       youtube: saleData.youtube,
       image: saleData.image,
       name: saleData.name,
@@ -453,6 +455,7 @@ export const deployPublicSaleERCTestnet = async (
       twitter: saleData.twitter,
       linkedin: saleData.linkedin,
       discord: saleData.discord,
+      whitelistEndDate: saleObject.whitelistEndDate,
       telegram: saleData.telegram,
       youtube: saleData.youtube,
       image: saleData.image,
@@ -580,6 +583,7 @@ export const deployPublicSaleERCMainnet = async (
       minAllocation: saleObject.minAllocation,
       maxAllocation: saleObject.maxAllocation,
       amountLiquidity: saleObject.amountLiquidity,
+      whitelistEndDate: saleObject.whitelistEndDate,
       listing: saleObject.listing,
       lockup: saleObject.lockup,
       presalePrice: saleObject.presalePrice,
@@ -675,6 +679,7 @@ export const deployPrivateSale = async (
       discord: saleData.discord,
       telegram: saleData.telegram,
       image: saleData.image,
+      whitelistEndDate: saleObject.whitelistEndDate,
       name: saleData.name,
       description: saleData.description,
       tags: saleData.tags,
@@ -758,6 +763,7 @@ export const deployPrivateSaleMainnet = async (
     const finalSaleObject = {
       saleId: saleId.toNumber(),
       saleAddress: deployedAddress,
+      whitelistEndDate: saleObject.whitelistEndDate,
       saleType: saleData.type,
       github: saleData.github,
       chainID: chainId,
@@ -878,6 +884,7 @@ export const deployPrivateErcSale = async (
 
     const finalSaleObject = {
       saleId: saleId.toNumber(),
+      whitelistEndDate: saleObject.whitelistEndDate,
       saleAddress: deployedAddress,
       saleType: saleData.type,
       github: saleData.github,
@@ -974,6 +981,7 @@ export const deployPrivateErcSaleMainnet = async (
     const finalSaleObject = {
       saleId: saleId.toNumber(),
       saleAddress: deployedAddress,
+      whitelistEndDate: saleObject.whitelistEndDate,
       saleType: saleData.type,
       github: saleData.github,
       chainID: chainId,

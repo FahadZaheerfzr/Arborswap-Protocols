@@ -38,7 +38,7 @@ export default function FundRaised({ icon, pool, status, sale, isFinished }) {
       return;
     }
     openLoadingModal();
-
+    console.log(sale,"sale")
     let contract;
     if (sale.currency.symbol === "BNB") {
       if (sale.saleType === "standard") {
@@ -81,7 +81,7 @@ export default function FundRaised({ icon, pool, status, sale, isFinished }) {
         );
       }
     }
-
+    console.log(contract, "contract")
     try {
       if (status === "Live") {
         const tx = await contract.withdraw();

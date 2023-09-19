@@ -21,7 +21,8 @@ import Web3 from "web3";
 import getSaleInfo from "utils/getSaleInfo";
 import { getLiquidityLockList, getLpLockInfos } from "utils/getLockList";
 import { getLpInfo } from "utils/lpInfo";
-
+import { BigNumber } from "ethers";
+import { formatBigToNum } from "utils/numberFormat";
 export default function AdminPanel({
   status,
   hard_cap,
@@ -42,7 +43,6 @@ export default function AdminPanel({
   //LoadingModal
   const { open: openLoadingModal, close: closeLoadingModal } =
     useModal("LoadingModal");
-
   const getContributors = async () => {
     try {
       let abi;
@@ -194,12 +194,25 @@ export default function AdminPanel({
       console.log(err);
       return;
     }
-
+    const saleInfo = await getSaleInfo(
+      sale.saleAddress,
+      sale.saleType,
+      sale.currency.symbol
+    );
+    let perc;
+    if (sale.saleType === "standard" || sale.currency.symbol === "BNB") {
+      perc = await saleInfo.totalBNBRaised;
+    } else if (sale.saleType === "private") {
+      perc = await saleInfo.totalERC20Raised;
+    }
+    perc = BigNumber.from(perc);
+    const percents = perc.mul(100).div(saleInfo.hardCap);
+    const filled = formatBigToNum(percents.toString(), 0, 1);
     //update the isFinised in database
     const finalSaleObject = {
       saleId: sale.saleId,
       saleAddress: sale.saleAddress,
-      saleType: sale.type,
+      saleType: sale.saleType,
       github: sale.github,
       website: sale.website,
       twitter: sale.twitter,
@@ -230,6 +243,7 @@ export default function AdminPanel({
       owner: sale.owner,
       isFinished: sale.isFinished,
       chainID: sale.chainID,
+      filledPercent: filled,
     }      
     try {
       const res = await axios.put(`${BACKEND_URL}/api/sale/${objId}`, {
@@ -324,6 +338,97 @@ export default function AdminPanel({
   function handleInput() {
     setIsInputOpen(!isInputOpen);
   }
+
+  const disableWhitelist = async () => {
+    openLoadingModal();
+    let contract;
+    if (sale.currency.symbol === "BNB") {
+      if (sale.saleType === "standard") {
+        contract = new Contract(
+          sale.saleAddress,
+          PublicSaleAbi,
+          library.getSigner()
+        );
+      }
+    } else {
+      if (sale.saleType === "standard") {
+        contract = new Contract(
+          sale.saleAddress,
+          PublicSaleErcAbi,
+          library.getSigner()
+        );
+      }
+    }
+    try {
+      const tx = await contract.setWLEnabled(false);
+      await tx.wait();
+
+      const saleInfo = await getSaleInfo(
+        sale.saleAddress,
+        sale.saleType,
+        sale.currency.symbol
+      );
+      let perc;
+      if (sale.saleType === "standard" || sale.currency.symbol === "BNB") {
+        perc = await saleInfo.totalBNBRaised;
+      } else if (sale.saleType === "private") {
+        perc = await saleInfo.totalERC20Raised;
+      }
+      perc = BigNumber.from(perc);
+      const percents = perc.mul(100).div(saleInfo.hardCap);
+      const filled = formatBigToNum(percents.toString(), 0, 1);
+      const finalSaleObject = {
+        saleId: sale.saleId,
+        saleAddress: sale.saleAddress,
+        saleType: sale.saleType,
+        github: sale.github,
+        website: sale.website,
+        twitter: sale.twitter,
+        linkedin: sale.linkedin,
+        discord: sale.discord,
+        telegram: sale.telegram,
+        youtube: sale.youtube,
+        image: sale.image,
+        name: sale.name,
+        description: sale.description,
+        tags: sale.tags,
+        token: sale.token,
+        minAllocation: sale.minAllocation,
+        maxAllocation: sale.maxAllocation,
+        amountLiquidity: sale.amountLiquidity,
+        listing: sale.listing,
+        lockup: sale.lockup,
+        presalePrice: sale.presalePrice,
+        endDate:sale.endDate,
+        startDate: sale.startDate,
+        hardCap: sale.hardCap,
+        softCap: sale.softCap,
+        unsoldToken: sale.unsoldToken,
+        currency: sale.currency,
+        dex: sale.dex,
+        whiteisting: false,
+        whiteListedAddresses: sale.whiteListedAddresses,
+        owner: sale.owner,
+        isFinished: sale.isFinished,
+        chainID: sale.chainID,
+        filledPercent: filled,
+      }      
+      try {
+        const res = await axios.put(`${BACKEND_URL}/api/sale/${objId}`, {
+          sale: finalSaleObject,
+        });
+        closeLoadingModal();
+        window.location.reload();
+      } catch (err) {
+        closeLoadingModal();
+        console.log(err);
+      }
+    } catch (e) {
+      closeLoadingModal();
+      console.log(e);
+    }
+  };
+
   async function handleAddAddress() {
     if (whiteListedAddresses[0] === "") {
       toast.error("Please enter atleast one address");
@@ -349,10 +454,24 @@ export default function AdminPanel({
           ...sale.whiteListedAddresses,
           ...whiteListedAddresses,
         ];
+        const saleInfo = await getSaleInfo(
+          sale.saleAddress,
+          sale.saleType,
+          sale.currency.symbol
+        );
+        let perc;
+        if (sale.saleType === "standard" || sale.currency.symbol === "BNB") {
+          perc = await saleInfo.totalBNBRaised;
+        } else if (sale.saleType === "private") {
+          perc = await saleInfo.totalERC20Raised;
+        }
+        perc = BigNumber.from(perc);
+        const percents = perc.mul(100).div(saleInfo.hardCap);
+        const filled = formatBigToNum(percents.toString(), 0, 1);
         const finalSaleObject = {
           saleId: sale.saleId,
           saleAddress: sale.saleAddress,
-          saleType: sale.type,
+          saleType: sale.saleType,
           github: sale.github,
           website: sale.website,
           twitter: sale.twitter,
@@ -382,6 +501,7 @@ export default function AdminPanel({
           whiteListedAddresses: updatedAddresses,
           owner: sale.owner,
           isFinished: sale.isFinished,
+          filledPercent: filled,
         };
         const res = await axios.put(`${BACKEND_URL}/api/sale/${objId}`, {
           sale: finalSaleObject,
@@ -515,6 +635,20 @@ export default function AdminPanel({
             </button>
           </div>
         )}
+        {
+          sale.whiteisting && (
+            <div className="mt-7">
+              <button
+                onClick={() => {
+                  disableWhitelist();
+                }}
+                className={`w-full bg-primary-green text-white rounded-md font-bold py-4`}
+              >
+                Disable Whitelist
+              </button>
+            </div>
+          )
+        }
         {saleInfo === false && !cancelled && (
           <div className="mt-7">
             <button

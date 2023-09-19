@@ -8,10 +8,16 @@ import axios from "axios";
 import { useModal } from "react-simple-modal-provider";
 import { BACKEND_URL } from "config/constants/LaunchpadAddress";
 import Web3 from "web3";
+import { Contract } from "ethers";
+import PublicSaleAbi from "../../config/abi/PublicSale.json";
+import PublicSaleErcAbi from "../../config/abi/PublicSaleErcAbi.json";
+import getSaleInfo from "utils/getSaleInfo";
+import { BigNumber } from "ethers";
+import { formatBigToNum } from "utils/numberFormat";
 
 export default function PoolPage() {
   const { id } = useParams();
-  const { account } = useEthers();
+  const { account, library } = useEthers();
   const [pool, setPool] = useState(null);
   const [modal, showModal] = useState(false);
   const [admin, setAdmin] = useState(false);
@@ -21,28 +27,26 @@ export default function PoolPage() {
   const { open: openLoadingModal, close: closeLoadingModal } =
     useModal("LoadingModal");
 
-
   useEffect(() => {
-  async function getAccount() {
-    const web3 = new Web3(window.ethereum);
-    try {
-      await window.ethereum.enable();
-      const res = await web3.eth.getAccounts();
-      setUserAccount(res[0]);
-      if (res[0] === saleOwner) {
-        setAdmin(true);
-        setAdminMode(true);
+    async function getAccount() {
+      const web3 = new Web3(window.ethereum);
+      try {
+        await window.ethereum.enable();
+        const res = await web3.eth.getAccounts();
+        setUserAccount(res[0]);
+        if (res[0] === saleOwner) {
+          setAdmin(true);
+          setAdminMode(true);
+        } else {
+          setAdmin(false);
+          setAdminMode(false);
+        }
+      } catch (e) {
+        console.log(e);
       }
-      else {
-        setAdmin(false);
-        setAdminMode(false);
-      }
-    } catch (e) {
-      console.log(e);
     }
-  }
-  getAccount();
-  }, [saleOwner,account]);
+    getAccount();
+  }, [saleOwner, account]);
 
   useEffect(() => {
     //get pool data from api
@@ -53,7 +57,7 @@ export default function PoolPage() {
         setPool(res.data);
         document.title = res.data.sale.name;
         // Check if the user is admin
-        setSaleOwner(res.data.sale.owner);        
+        setSaleOwner(res.data.sale.owner);
         closeLoadingModal();
       })
       .catch((err) => {
@@ -62,6 +66,7 @@ export default function PoolPage() {
         closeLoadingModal();
       });
   }, []);
+
   return (
     pool && (
       <div className="w-full">
