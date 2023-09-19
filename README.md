@@ -1,3 +1,3 @@
-# Arborswap-Launchpad Frontend
+# Arborswap-Protocols Frontend
 
-This repo contains the code to Arborswap Launchpad Frontend
+This repo contains the code to Arborswap Protocols Frontend
